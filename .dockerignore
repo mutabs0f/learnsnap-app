@@ -1,0 +1,66 @@
+# Dependencies (will be installed in container)
+node_modules
+.pnpm-store
+
+# Git
+.git
+.gitignore
+
+# CI/CD
+.github
+
+# Documentation
+*.md
+docs/
+!README.md
+
+# Tests
+e2e/
+server/__tests__/
+client/src/__tests__/
+coverage/
+playwright-report/
+test-results/
+vitest.config*.ts
+playwright.config.ts
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env*
+.replit
+replit.nix
+replit.md
+
+# Logs
+logs/
+*.log
+
+# Build artifacts (we build in container)
+dist/
+build/
+.vite/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary
+tmp/
+temp/
+.cache/
+.config/
+.local/
+
+# Assets not needed in container
+attached_assets/
+
+# Backup files
+*.backup
+*.bak
+*.zip
+*.tar.gz

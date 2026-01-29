@@ -1,0 +1,96 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # Core E2E tests on push to main
+  e2e-tests:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium]  # Start with Chrome only for speed
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps ${{ matrix.project }}
+      
+      - name: Run E2E Smoke Tests
+        run: npx playwright test e2e/specs/smoke.spec.ts --project=${{ matrix.project }}
+        env:
+          CI: true
+          NODE_ENV: test
+      
+      - name: Run Critical Flow Tests
+        run: npx playwright test e2e/specs/critical-flows.spec.ts --project=${{ matrix.project }}
+        env:
+          CI: true
+          NODE_ENV: test
+        continue-on-error: true  # Don't fail on critical flows yet
+      
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: playwright-report/
+          retention-days: 30
+      
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-${{ matrix.project }}
+          path: test-results/
+          retention-days: 7
+
+  # Accessibility tests
+  accessibility-tests:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+      
+      - name: Run Accessibility Tests
+        run: npx playwright test e2e/specs/accessibility.spec.ts --project=chromium
+        env:
+          CI: true
+          NODE_ENV: test
+        continue-on-error: true  # A11y tests are advisory for now
+      
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: a11y-report
+          path: playwright-report/
+          retention-days: 30
